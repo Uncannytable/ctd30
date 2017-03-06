@@ -7,15 +7,32 @@
 \usepackage[brazil]{babel}   
 %\usepackage[latin1]{inputenc}  
 
-     
+\usepackage{tikz}
+\usepackage{xcolor,xspace}
+\usepackage{thmtools}
+\usepackage{amsmath,amssymb}
+\usepackage{mathpartir}
+\usepackage{lettrine}
+\usepackage[modulo]{lineno}
+\usepackage{lipsum}
+
+\newcommand{\auxFun}[1]{\mbox{\textbf{#1}}}
+\newcommand\loc[1]{\mbox{\textsf{loc}$_{#1}$}}
+\newcommand\gr{\xspace\mbox{GR}\xspace}
+\newcommand\lr{\xspace\mbox{LR}\xspace}
+\newcommand{\cupdot}{\mathbin{\mathaccent\cdot\cup}}
+\newcommand\supp{\xspace\mbox{supp}\xspace}
+\newcommand{\lb}[1]{\mbox{$#1$}_{\downarrow}}
+\newcommand{\ub}[1]{\mbox{$#1$}_{\uparrow}}     
+
 \sloppy
 
-\title{Instructions for Authors of SBC Conferences\\ Papers and Abstracts}
+\title{Symbolic Range Analysis of Pointers\\ Dissertation Summary}
 
-\author{Vitor Mendes paisante}
+\author{Vitor Mendes paisante\\Advisor: Fernando Magno Quintão Pereira\\Co-advisor: Leonardo Barbosa e Oliveira}
 
 
-\address{Departamento de Ciência da Computação da Universidade Federal de Minas Gerais
+\address{Federal University od Minas Gerais Computer Science Department
   \email{\{paisante\}@dcc.ufmg.br}
 }
 
@@ -31,22 +48,22 @@ state-of-the-art approaches inside compilers still face challenges regarding
 precision and speed.
 In particular, pointer arithmetic, a key feature in C and C++, is yet to be
 handled satisfactorily.
-This work presents a new alias analysis algorithm to solve this problem.
-The key insight of our approach is to combine alias analysis with symbolic
+This work presented a new alias analysis algorithm to solve this problem.
+The key insight of our approach was to combine alias analysis with symbolic
 range analysis.
-This combination lets us disambiguate fields within arrays and structs,
+This combination allowed us to disambiguate fields within arrays and structs,
 effectively achieving more precision than traditional algorithms.
-To validate our technique, we have implemented it on top of the LLVM compiler.
-Tests on a vast suite of benchmarks show that we can disambiguate several
-kinds of C idioms that current state-of-the-art analyses cannot deal with.
-In particular, we can disambiguate 1.35x more queries than the alias analysis
-currently available in LLVM.
-Furthermore, our analysis is very fast: we can go over one million assembly
+To validate our technique, we implemented it on top of the LLVM compiler.
+Tests on a vast suite of benchmarks showed that we could disambiguate several
+kinds of C idioms that current state-of-the-art analyses could not deal with.
+In particular, we could disambiguate 1.35x more queries than the alias analysis
+that was currently available in LLVM.
+Furthermore, our analysis was very fast: we were able go over one million assembly
 instructions in 10 seconds..
 \end{abstract}
      
 
-\section {Context}
+\section {Introduction}
 % the importance of Alias Analysis
 Pointer analysis is one of the most fundamental compiler technologies.
 This analysis lets the compiler distinguish one memory location from others;
@@ -57,11 +74,10 @@ one of the most researched topics within the field of compiler
 construction\cite{Hind01}.
 This research has contributed to make the present algorithms more
 precise~\cite{Hardekopf07a,Zhang14}, and faster~\cite{Hardekopf11,Shang12}.
-Nevertheless, one particular feature of imperative programming languages remains
+Nevertheless, one particular feature of imperative programming languages remained
 to be handled satisfactorily by the current state-of-the-art approaches:
 the disambiguation of pointer intervals.
 
-\section {Problem}
 % The problem imposed by pointer arithmetics and The need for better alias analyses.
 Mainstream compilers still struggle to distinguish intervals within the
 same array.
@@ -74,9 +90,9 @@ array posses different offsets and they do not alias. To figure out that such
 offsets are disjoint it is necessary to verify their ranges and add a new layer
 of analysis to the current pointer analyses available.
 
-\begin{figure}[t!]
+\begin{figure}[th]
   \centering
-\includegraphics[width=\linewidth]{img/introex}
+\includegraphics[width=320px]{img/introex}
   \caption{Example that state-of-the-art pointer analyses handle 
   unsatisfactorily.}
   \label{fig:intro_ex}
@@ -96,18 +112,17 @@ interchanging~\cite[Ch.09]{Wolfe96}, are very limited in practice.
 Therefore, we claim that, to reach their full potential, compilers need to
 be provided with more effective alias analyses.
 
-\section {Solution}
 % Combining alias and range analyses.
-This work describes such an analysis.
-We introduce an abstract domain that associates pointers with symbolic ranges.
+This dissertation described such an analysis.
+We introduced an abstract domain that associates pointers with symbolic ranges.
 In other words, for each pointer $p$ we conservatively estimate the range of
 memory slots that can be addressed as an offset of $p$.
 We let $>(p)$ be the global abstract address set associated with pointer $p$, 
 such that if
-$loc{i} + [l, u] \in >(p)$, then $p$ may dereference any address
-from $@(loc{i}) + l$ to $@(loc{i}) + u$,
-where $loc{i}$ is a program site that
-contains a memory allocation call, and $@(loc{i})$ is the actual return
+$\loc{i} + [l, u] \in >(p)$, then $p$ may dereference any address
+from $@(\loc{i}) + l$ to $@(\loc{i}) + u$,
+where $\loc{i}$ is a program site that
+contains a memory allocation call, and $@(\loc{i})$ is the actual return
 address of the {\em malloc} at runtime.
 We let $\{ l, u \}$ be two {\em symbols} defined within the program code.
 Like the vast majority of pointer analyses available in the compiler
@@ -118,35 +133,168 @@ In other words, our results are sound with respect to the semantics of the
 program if this program has no undefined behavior, such as out-of-bounds
 accesses.
 
-\textbf{The key insight of our research} is the combination of pointer analysis
+\textbf{The key insight of our research} was the combination of pointer analysis
 with range analysis on the symbolic interval lattice.
 In a symbolic range analysis, ranges are defined as expressions of the program's
 symbols, a symbol being either a constant or the name of a variable.
 There exist many approaches to symbolic range analyses in the
 literature~\cite{Blume94,Nazare14,Rugina05}.
-The algorithms that we present in this work do not depend on any particular
+The algorithms that we presented in this work do not depend on any particular
 implementation.
 Nevertheless, the more precise the range analysis that we use, the more
 precise the analysis facts that we produce.
-In this work we have adopted the symbolic range analysis proposed in 1994 by
+In this work we adopted the symbolic range analysis proposed in 1994 by
 William Blume and Rudolf Eigenmann~\cite{Blume94}.
 
+\section{Analysis Overview}
+\label{sec:ovf}
+
+We have two different ways to answer the
+following question: ``do pointers $\mathit{tmp}_i$ and $\mathit{tmp}_j$
+alias?"
+These tests are called {\em global} and {\em local}.
+In this section, we will use two different examples to illustrate situations
+in which each query is more effective.
+These distinct strategies are complementary: one is not a superset of the other.
+
+\noindent
+\textbf{Global pointer disambiguation. }
+Figure~\ref{fig:exmotiv} illustrates our first approach to disambiguate
+pointers.
+The figure shows a pattern typically found in distributed systems
+implemented in C.
+Messages are represented as arrays of bytes.
+In this particular example, messages have two parts: an identifier, which is stored in the beginning of the array, and a payload, which is stored right
+after.
+The loops in lines 5-8 and 9-12 fill up each of these parts with data.
+If a compiler can prove that the stores at lines 6 and 10 are always
+independent, then it can perform optimizations that would not be
+possible otherwise.
+For instance, it can parallelize the loops, or switch them, or merge them into a
+single body.
+
+\begin{figure}[t]
+  \centering
+\includegraphics{img/ex0_src.pdf}
+  \caption{Example of program that builds up messages as sequences of
+  serialized bytes. We are interested in disambiguating the locations accessed
+  at lines 6 and 10.}
+  \label{fig:exmotiv}
+\end{figure}
+
+No alias analysis currently available in either gcc or LLVM is able to
+disambiguate the stores at lines 6 and 10.
+These analyses are limited because they do not contain {\em range information}.
+The range interval $[l, u]$ associated with a variable $i$ is
+an estimate of
+the lowest ($l$) and highest ($u$) values that $i$ can assume
+throughout the execution of the program.
+In this work, we proposed an alias analysis that solves this problem.
+To achieve this goal, we coupled this alias analysis with range
+analysis on symbolic intervals~\cite{Blume94}.
+Thus, we can say that the store at line 6 might modify any address from
+$\mathtt{p} + 0$ to $\mathtt{p} + \mathtt{N} - 1$, and that the store at line 10
+might write on any address from $\mathtt{p} + N$ to $\mathtt{p} + N + 
+\mathtt{strlen(m) - 1}$.
+For this purpose, we use an \emph{abstract address} that
+encodes the actual value(s) of $p$ inside the $\mathtt{prepare}$
+function.
+These memory addresses are depicted in Figure \ref{fig:pointer_range}, where each
+square represents a memory slot.
+
+\begin{figure}[t!]
+\begin{small}
+  \centering
+\includegraphics{img/pointer_range_Maroua}
+  \caption{Array $p$ in the routine \texttt{prepare} seen in
+    Fig.\ref{fig:exmotiv}. Lines 6 and 10 represent the different stores in the figure.}
+  \label{fig:pointer_range}
+\end{small}
+\end{figure}
+
+% How to disambiguate queries:
+Whole program analysis reveals that there are two candidate locations
+that any pointer in the program may refer to.
+These locations have been created at lines 17 and 18 of Figure~\ref{fig:exmotiv},
+and we represent them abstractly as $\loc{17}$ and  $\loc{18}$.
+These names are unique across the entire program.
+After running our analysis, we find out that the abstract state ($\gr$) of
+\texttt{i} at line 6 is
+$\gr(\mathtt{i}_{\ell{}n.6}) = \{ \loc{17} + [0, \mathtt{N} - 1]$,
+and that the abstract state of \texttt{i} at line 10 is
+$\gr(\mathtt{i}_{\ell{}n.10}) = \{ \loc{17} + [\mathtt{N}, \mathtt{N + strlen}(m) - 1]
+\}$.
+Given that these two abstract ranges do not intersect, we know that
+the two stores update always different locations.
+We call this check the {\em global disambiguation
+  criterion}.
+
+\begin{figure}[t!]
+  \centering
+\includegraphics{img/ex4_src}
+  \caption{Program that shows the need to assign common names to addresses that spring from the same base pointer.}
+  \label{fig:ex4_src}
+\end{figure}
+
+\begin{figure}[t!]
+  \centering
+\includegraphics{img/ex4_norm}
+  \caption{Program from Figure~\ref{fig:ex4_src}, after pointer is renamed
+  within loop.}
+  \label{fig:ex4_norm}
+\end{figure}
+
+\textbf{Local pointer disambiguation. } Figure~\ref{fig:ex4_src} shows
+a program in which the simple intersection of ranges would not let us
+disambiguate pointers $\mathit{tmp}_0$ and $\mathit{tmp}_1$.  After
+solving global range analysis for that program, we have that
+$\gr(\mathit{tmp}_0) = \{ \loc{0} + [0, N + 1] \}$ and that
+$\gr(\mathit{tmp}_1) = \{ \loc{0} + [1, N + 2] \}$, where $\loc{0}$
+defines the abstract address of the function parameter $p$.  The
+intersection of these ranges is non-empty for $N \geq 1$.  Thus, the
+global check that we have used to disambiguate locations in
+Figure~\ref{fig:exmotiv} does not work in Figure~\ref{fig:ex4_src}.
+Notwithstanding this fact, we know that $\mathit{tmp}_0$ and
+$\mathit{tmp}_1$ will never point to a common location.  In fact,
+these pointers constitute different offsets from the same base
+address.
+To deal with this imprecision of the global check, we will be also discussing
+a {\em local disambiguation criterion}.
+In this case, we rename every pointer $p$ that is alive at the beginning of
+a single entry region to a fresh name $new_{p}$.
+Whereas we use the global test for pointers in different regions, the
+local test is applied onto pointers within the same single entry region.
+After renaming, we update the table of pointer pairs, so that
+$\lr(new_p) = \loc{new} + [0, 0]$, regardless of the old ranges assigned to
+the original pointer $p$.
+In Figure~\ref{fig:ex4_norm} we would have that
+$\lr(\mathit{tmp}_2) =  \loc{new} + [0, 0]$  and
+$\lr(\mathit{tmp}_3) =  \loc{new} + [1, 1]$, where $\mathit{tmp_2}$ is
+the name of the address $\mathit{new}_p[0]$, and
+$\mathit{tmp_3}$ is the name of the address $\mathit{new}_p[1]$.
+This new binding of intervals to pointers gives us empty
+intersections between similar locations in $\lr(tmp_2)$ and $\lr(tmp_3)$.
+Consequently, the local check is able to distinguish addresses referenced by
+$\mathit{tmp}_2$ and $\mathit{tmp}_3$.
+
 \section {Summary of experimental results}
-To validate our ideas, we have implemented them in the LLVM compilation
+To validate our ideas, we implemented them in the LLVM compilation
 infra-structure~\cite{Lattner04}.
-We have tested our pointer analysis onto three different benchmarks
+We tested our pointer analysis onto three different benchmarks
 used in previous work related to pointer disambiguation:
 Prolangs~\cite{Ryder01}, PtrDist~\cite{Zhao05} and MallocBench~\cite{Grunwald93}.
-As we show in Chapter \ref{chap:exp}, our analysis is linear on the size of
-programs.
+Our analysis fared linearly on the size of programs.
 It can go over one-million assembly instructions in approximately 10 seconds.
-Furthermore, we can disambiguate 1.35x more queries than the alias analysis
+Furthermore, we can disambiguate 1.35x more queries than the alias analyses
 currently available in LLVM.
 
 \section {Summary of publications}
 The analysis described here was published on the International Symposium on 
 Code Generation and Optimization (CGO) of 2016 held in Barcelona, Spain 
-\cite{Paisante16}. 
+\cite{Paisante16}.  Further development of our analysis techniques yielded 
+another published article on the International Symposium on 
+Code Generation and Optimization (CGO) of 2017 held in Austin, Texas 
+\cite{Maleej17}.
 
 The technology behind it is also present on two other publications 
 \cite{Paisante14, Saggioro15}. In these papers, the algorithm presented here was used
@@ -161,111 +309,9 @@ The layout and content inference analysis used in these papers differed from our
 current approach by using a numerical range analysis, since a symbolic approach 
 would not be of relevance for such application.
 
-\section {Limitations}
-%- Limitations of the current analysis
-Using the symbolic range analysis for comparing offsets is inherently 
-imprecise. Issues lie on comparing two symbolic expressions and its 
-difficulties, especially on comparing lower bounds with upper bounds from two
-different variables, and on local relationships of variables with overlapping 
-ranges.
-
-Figure \ref{fig:lim1} shows the first issue. Analyzing this algorithm, the 
-symbolic range analysis returns the following ranges: $R(\sigma_a) = [a, b-1]$,
-$R(\sigma_b) = [a+1, b]$. This hinders the disambiguation of the two array 
-accesses, $V[\sigma_a]$ and $V[\sigma_b]$, since it is impossible to prove that
- the ranges of $\sigma_a$ and $\sigma_b$ do not overlap. To do so, it would be 
- necessary for the valuation of symbolic expressions to be able to say that 
- $b-1 < a+1$ or that $b < a$, which it cannot do. So in this example, even 
- though it is obvious that the two array accesses cannot alias to the same 
- location since their offsets are obligatorily different by the \textbf{if} 
- condition, we cannot disambiguate them. 
- 
-Figure \ref{fig:lim2} shows the second issue. It again shows two array accesses 
-that are obviously disjoint that our analysis cannot disambiguate. Analyzing this 
-algorithm, the symbolic range analysis returns the following ranges: 
-$R(i) = [0, 9]$, $R(j) = [1, 10]$. It's clear that these ranges overlap and 
-that our analysis could not say that they are disjoint even though, at the 
-array accesses, $j$ is aways different and greater than $i$. 
-
-These examples show two very interesting limitations of our analysis. They 
-both can disable optimizations such as automatic parallelization of code and 
-loop invariant code motion on some cases in which these optimizations might be 
-desirable. It is clear that simply verifying if two offset ranges are disjoint 
-is not enough to achieve ideal precision, since they can hide relationships 
-between variables that are aways true when the two variables are alive and 
-that can help in disambiguating two pointers, even if there is a relationship 
-between these pointers or between the offsets that constitute such pointers. 
- 
-
-\begin{figure}[t!]
-  \centering
-\includegraphics[width=\linewidth]{img/limitation}
-  \caption{Example of our first described limitation. Even though we cannot 
-  prove that the symbolic ranges of $\sigma_a$ and $\sigma_b$ do not overlap, 
-  it is obvious that $\sigma_a$ is aways different from $\sigma_b$ because of 
-  the \textbf{if} condition.}
-  \label{fig:lim1}
-\end{figure}
-
-\begin{figure}[t!]
-  \centering
-\includegraphics[width=\linewidth]{img/limitation2}
-  \caption{Example of our second described limitation. Even though we cannot 
-  prove that the ranges of $i$ and $j$ do not overlap, 
-  it is obvious that $j$ is aways different from $i$ because it is 
-  aways greater.}
-  \label{fig:lim2}
-\end{figure}
-
-\section {Future Work}
-The reason for the limitations exposed before lays on the fact that our analysis 
-use range intervals to disambiguate pointers.
-In the examples of figure \ref{fig:lim1} and figure \ref{fig:lim2}, the ranges 
-of integer variables might either overlap or aren't comparable. But, in the 
-examples, variables do have relationships between them that allow for 
-disambiguation in the form of inequalities ($a<b$ and $i<j$). To take advantage 
-of such relationships we intend to use a lattice similar to Pentagons.
-
-Pentagons is an abstract domain invented by Logozzo and F\"{a}hndrich
-to infer symbolic bounds to the integer variables used in
-programs \cite{Logozzo08,Logozzo10}.
-This abstract domain is formed by the combination of two
-lattices.
-The first lattice is the {\em integer interval domain} \cite{Cousot77}, which
-maps integer variables to ranges $[l, u]$ of numeric lower ($l$) and upper ($u$)
-bounds.
-The second lattice is the {\em strict upper bound}, which maps each variable
-$v$ to a set $L_<$ of other variables, so that if $u \in L_<(v)$, at a given
-program point $\mathtt{p}$, then $u < v$ at $\mathtt{p}$. 
-
-Since their debut \cite{Logozzo08}, Pentagons have been used in several
-different ways.
-For instance, Logozzo and F\"{a}hndrich have employed this domain to eliminate
-array bound checks in strongly typed programming
-languages \cite{Logozzo10}, and to ensure absence of division by zero or
-integer overflows in programs.
-Moreover, Nazar\'{e} {\em et al.} \cite{Nazare14} have used Pentagons to reduce
-the overhead imposed by AddressSanitizer \cite{Serebryany12} to guard C against
-out-of-bounds memory accesses.
-The appeal of pentagons comes from two facts.
-First, this abstract domain can be computed efficiently -- in quadratic time on
-the number of program variables.
-Second, as an enabler of compiler optimizations, Pentagons have been
-proven to be substantially more effective than other forms of abstract
-interpretation of similar runtime \cite{Logozzo08}.
-
-%- Future Work
-Our initial and recent use of pentagons for such purpose has been successful. 
-It is able to handle programs as large as SPEC's gcc in a few minutes and go
-through SPEC CPU 2006 \cite{Henning06} in able time. It has proven very 
-useful in some cases, such as SPEC \texttt{470.lbm}.  
-In future work, we plan to investigate better splitting strategies
-and other more expressive lattices to improve the global precision of
-our analyses.
-
 \section {Final Conclusions}
 %- Final Conclusions
-In this work we have presented a new alias analysis technique that handles,
+In this work we presented a new alias analysis technique that handles,
 within the same theoretical framework, the subtleties of pointer arithmetic
 and memory indexation.
 Our technique can disambiguate regions within arrays and C-like structs using
